@@ -5,9 +5,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.sampler import SubsetRandomSampler
 
+from main.helpers import get_accuracy, get_loss
+
 
 def train(model, name, data, validation_data, batch_size=1, num_epochs=1, shuffle=False, learning_rate=0.01,
-          checkpoint_frequency=10, save=True):
+          checkpoint_frequency=10, save=True, train_save="default.png", valid_save="default.png"):
     train_loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=shuffle)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -48,12 +50,14 @@ def train(model, name, data, validation_data, batch_size=1, num_epochs=1, shuffl
     plt.plot(iters, losses, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Loss")
+    plt.savefig(train_save + "_loss.png")
     plt.show()
     plt.title("Training Curve")
     plt.plot(iters, train_acc, label="Train")
     plt.xlabel("Iterations")
     plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
+    plt.savefig(train_save + "_accuracy.png")
     plt.show()
 
     if validation_data is not None:
@@ -62,12 +66,14 @@ def train(model, name, data, validation_data, batch_size=1, num_epochs=1, shuffl
         plt.xlabel("Iterations")
         plt.ylabel("Validation Accuracy")
         plt.legend(loc='best')
+        plt.savefig(valid_save + "_accuracy.png")
         plt.show()
         plt.title("Validation Loss")
         plt.plot(validation_loss, label="Validation")
         plt.xlabel("Iterations")
         plt.ylabel("Validation Loss")
         plt.legend(loc='best')
+        plt.savefig(valid_save + "_loss.png")
         plt.show()
 
     print("Final Training Accuracy: {}".format(train_acc[-1]))
