@@ -1,21 +1,11 @@
 # Imports:
-import matplotlib.pyplot as plt
-import numpy as np
-import time
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision
-import tensorflow as tf
-from torchvision.transforms import ToTensor
-from io import BytesIO
 from PIL import Image
-from torch.utils.data.sampler import SubsetRandomSampler
-import torchvision.transforms as transforms
+from torchvision.transforms import ToTensor
 
-from main.models import CNN
-from main.train import train
+from general.models import CNN
+from general.helpers import Data
+from general.train import train_model
 
 letter_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
 std_no = '1002951754'
@@ -39,22 +29,10 @@ for letter_index in range(1, 10):
     image_string = image_string.replace(letter_array[letter_index - 1],
                                         letter_array[letter_index])
 
-
-class Data():
-    def __init__(self, images, labels):
-        self.labels = labels
-        self.images = images
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, index):
-        x = self.images[index]
-        y = self.labels[index]
-        return x, y
-
-
 small_data = Data(images, labels)
+
 network = CNN()
-train(network, 'small_data', small_data, None, num_epochs=100, learning_rate=0.001, batch_size=27,
-      checkpoint_frequency=25, save=False, train_save="small_data/results/overtrain_training")
+train_save_directory = "small_data/results/"
+model_save_directory = "small_data/models/"
+train_model(network, "CNN", small_data, batch_size=256, epoch_count=100, shuffle=True, learning_rate=0.001,
+            checkpoint_frequency=20, train_save=train_save_directory, model_save=model_save_directory)
