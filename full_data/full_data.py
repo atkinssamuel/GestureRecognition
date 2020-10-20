@@ -17,7 +17,7 @@ testing_data = pickle.load(testing_data_obj)
 
 network = CNN()
 
-train = False
+train = TrainingConsts.train
 if train:
     train_model(network, "CNN", training_data, DirectoryConsts.results_directory,
                 DirectoryConsts.model_save_directory, validation_data=validation_data,
@@ -26,6 +26,6 @@ if train:
                 checkpoint_frequency=TrainingConsts.checkpoint_frequency, momentum=TrainingConsts.momentum,
                 scheduler=TrainingConsts.scheduler, save=TrainingConsts.save_flag)
 
-test = True
+test = TestingConsts.test
 if test:
     outputs = test_model(network, DirectoryConsts.model_save_directory, TestingConsts.test_model_name, testing_data)

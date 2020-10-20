@@ -14,6 +14,7 @@ class FileNames:
 
 
 class TrainingConsts:
+    train = False
     name = "CNN"
     batch_size = 256
     epoch_count = 150
@@ -26,4 +27,5 @@ class TrainingConsts:
 
 
 class TestingConsts:
+    test = True
     test_model_name = 'CNN_860_256_0.0005'
