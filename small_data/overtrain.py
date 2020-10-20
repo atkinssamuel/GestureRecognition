@@ -36,4 +36,4 @@ network = CNN()
 
 train_model(network, "CNN", small_data, DirectoryConsts.small_results_directory,
             DirectoryConsts.small_model_save_directory, batch_size=256, epoch_count=100,
-            shuffle=True, learning_rate=0.001, checkpoint_frequency=20, momentum=0.9, save=False)
+            shuffle=True, learning_rate=0.001, checkpoint_frequency=20, momentum=0.9, scheduler=False, save=False)

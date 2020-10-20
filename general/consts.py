@@ -16,12 +16,13 @@ class FileNames:
 class TrainingConsts:
     name = "CNN"
     batch_size = 256
-    epoch_count = 1
+    epoch_count = 150
     shuffle_flag = False
-    learning_rate = 0.001
+    learning_rate = 0.0005
     checkpoint_frequency = 20
     momentum = 0.9
-    save_flag = False
+    scheduler = False
+    save_flag = True
 
 
 class TestingConsts:

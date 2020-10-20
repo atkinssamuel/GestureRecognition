@@ -5,16 +5,18 @@ import torch.nn as nn
 import torch.optim as optim
 import scipy.signal
 from general.helpers import get_accuracy, get_loss
+from general.plotting import plot_train_valid, plot_train
 
 
 def train_model(model, name, training_data, results_dir, model_save, validation_data=None, batch_size=1, epoch_count=1,
-                shuffle=False, learning_rate=0.01, checkpoint_frequency=5, momentum=0.9, save=False):
+                shuffle=False, learning_rate=0.01, checkpoint_frequency=5, momentum=0.9, scheduler=False, save=False):
 
     train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # The scheduler reduces the learning rate when the loss begins to plateau:
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    if scheduler:
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
     iterations, losses, train_acc, validation_acc, validation_loss = [], [], [], [], []
 
     # training
@@ -27,6 +29,8 @@ def train_model(model, name, training_data, results_dir, model_save, validation_
             loss = criterion(outputs, labels)  # compute the total loss
             loss.backward()  # backward pass (compute parameter updates)
             optimizer.step()  # make the updates for each parameter
+            if scheduler:
+                scheduler.step()
 
             # save the current training information
             iterations.append(current_iteration)
@@ -39,7 +43,9 @@ def train_model(model, name, training_data, results_dir, model_save, validation_
 
             # checkpoint:
             if current_iteration % checkpoint_frequency == 0:
-                print("Current Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
+                print("Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
+                print("Training Loss at Iteration {}: {}".format(current_iteration, losses[-1]))
+                print("Learning Rate at Iteration {}: {}\n".format(current_iteration, optimizer.param_groups[0]['lr']))
                 if save:
                     model_string = str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
                                    '_' + str(learning_rate)
@@ -50,48 +56,10 @@ def train_model(model, name, training_data, results_dir, model_save, validation_
 
     # plotting
     if validation_data is not None:
-        plt.title("Training and Validation Accuracies")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(validation_acc), polyorder=3, window_length=5),
-                 label="Validation")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
-                 label="Train")
-        plt.xlabel("Iterations")
-        plt.ylabel("Accuracy")
-        plt.legend(loc='best')
-        plt.grid(True)
-        plt.savefig(results_dir + "training_valid_accuracy.png")
-        plt.close()
-
-        plt.title("Training and Validation Losses")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(validation_loss), polyorder=3, window_length=5),
-                 label="Validation")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
-                 label="Train")
-        plt.xlabel("Iterations")
-        plt.ylabel("Loss")
-        plt.legend(loc='best')
-        plt.grid(True)
-        plt.savefig(results_dir + "training_valid_loss.png")
-        plt.close()
+        plot_train_valid(iterations, validation_acc, train_acc, validation_loss, losses, results_dir)
     else:
-        plt.title("Training Accuracy")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
-                 label="Train")
-        plt.xlabel("Iterations")
-        plt.ylabel("Training Accuracy")
-        plt.legend(loc='best')
-        plt.grid(True)
-        plt.savefig(results_dir + "training_accuracy.png")
-        plt.close()
+        plot_train(iterations, train_acc, losses, results_dir)
 
-        plt.title("Training Loss")
-        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
-                 label="Train")
-        plt.xlabel("Iterations")
-        plt.ylabel("Training Loss")
-        plt.grid(True)
-        plt.savefig(results_dir + "training_loss.png")
-        plt.close()
 
 
 

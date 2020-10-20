@@ -61,22 +61,30 @@ Length of testing dataset: 342
 Training-Valdation-Testing Split = 70.19-14.99-14.82
 ```
 
-
-
-Originally, a subset of the dataset was used to ensure that the program could successfully achieve perfect training 
-accuracy. The loss and accuracy plots corresponding to this dataset are illustrated below:
+After saving these data files, ```train_model``` and ```test_model``` functions were defined in ```train.py``` and ```test.py```, respectively. Then, the model design process began. To ensure that the ```train_model``` and ```test_model``` functions were defined properly, then they would be able to achieve 100% training accuracy on a smaller dataset. Thus, a dataset containing just the images that I took was created. Simple models were constructed and run on this small dataset. The loss and accuracy plots corresponding to this dataset are illustrated below:
 
 ![](small_data/results/training_accuracy.png)
 
-*Figure 4: The training accuracy of the CNN when applied to a subset of the data*
+*Figure _: The training accuracy of a simple CNN when applied to a subset of the data*
 
 ![](small_data/results/training_loss.png)
 
-*Figure 5: The training loss of the CNN when applied to the same dataset subset*
+*Figure _: The training loss of a simple CNN when applied to the same dataset subset*
 
-After the program was verified, the design of the network began.
+From the plots above, we can see the training accuracy shoot up to 100% and the training loss quickly approach a negligible value. The training function will be discussed in detail in the coming sections.
 
-## Architecture
+## Architecture Selection
+### Motivation
+Fully-connected layers alone can not effectively categorize images. Convolutional neural networks, however, can. There are a few reasons for this.
+
+1. Convolutional layers utilize weight sharing accross the kernels
+2. Convolutional layers recognize the spacial locality of the image features
+    - The order of the inputs does not change the way that fully-connected layers learn from their data
+3. Convolutional layers followed by pooling layers are robust to image translation and rotation
+
+Smaller kernels are able to learn local features whereas larger features interpret information more generally. Therefore, the strategy for the design of this network is to start with small filters, keeping the feature space wide and shallow, collecting information about the various edges and color changes present in the image. Then, gradually increase the filter sizes and the number of feature maps as the network grows. Finally, flatten the output of the last convolutional layer and feed this output into a fully-connected neural network.
+
+### Architecture
 The selected architecture for the convolutional neural network is illustrated by the code snippet below:
 ```python
 class CNN(nn.Module):
@@ -106,55 +114,37 @@ class CNN(nn.Module):
         return (x)
 ```
 Three conv-pool layers were used followed by three fully-connected layers. The conv-pool layers
-progressively increased in depth and decreased in width. The fully connected layers followed a similar pattern
-with hidden layer sizes of 128 and 64, respectively.
+progressively increased in depth and decreased in width. The fully connected layers followed a similar pattern with hidden layer sizes of 128 and 64, respectively. Each convolutional layer was followed by a ReLU activation function to introduce non-linearity. ReLU activation functions were also used as activation functions for the fully-connected layers because the ReLU activation function is efficient compared to the sigmoid or tanh activation functions. Given the complexity of our model, efficiency was particularly important. This network was the last in a long line of failed candidate models. Originally, a much more simple structure was hypothesized but it failed to capture the complex relationships present in the data. 
 
-## Network Features
-The network was prone to instability. As such, a relatively small learning rate of 0.0005 was selected along with a
-batch size of 256. The network used an Adam optimizer and cross-entropy loss. The use of momentum and a scheduler 
-did not yield stronger results. The network features mentioned above produced a strong testing accuracy and a stable 
-training curve.
+## Training Parameters
+The chosen network is complex and the inputs to the network are large. Training this network took hours to complete. The complexity of the network was considered when selecting an optimizer and loss function. Ultimately, the Adam optimizer was selected because of its efficiency and rapid convergence when compared with basic gradient descent. Stochastic gradient descent was also tried, but it failed to converge to a reasonable minima after a tremendous amount of iterations. The multi-class cross entropy loss function was selected. This loss function is the standard loss function for multi-class classification and straying from it is only wise when your data is particularly sparse or your data has some unique property that you can exploit. 
 
 ## Results
-The loss and accuracy training curves obtained using the parameters mentioned above are displayed below:
+The loss and accuracy training curves obtained using the previously defined model are displayed below:
 
-![](full_data/results/training_loss.png)
+![](full_data/results/training_valid_loss.png)
 
-*Figure 6: Training loss curve for the full gesture dataset using the hyper-parameters delineated above*
+*Figure 6: Training and validation loss curve for the full gesture dataset*
 
-![](full_data/results/training_accuracy.png)
+![](full_data/results/training_valid_accuracy.png)
 
-*Figure 7: Training accuracy curve for full gesture dataset using the hyper-parameters delineated above*
+*Figure 7: Training and validation accuracy curve for full gesture dataset*
 
-After training the network, I loaded the weight setting that produced the smallest validation loss. These weights are 
-saved in the "full_data/models" folder. Using this set of weights, this network achieved a testing accuracy of 81.29% 
+From the above images we can see that oscillation exists in our loss and accuracy plots. This typically occurs when the learning rate is too large or the batch size is too small. While oscillation does exist, the training loss approaches 0, the final training accuracy reaches 99.5%, and the validation loss clearly reaches some sort of minima. 
+
+To select a model from this plot we choose the model that minimizes the validation loss. After this point the model begins to overfit to the training dataset as the training loss continues to decrease while the validation loss increases. The optimal model, as delineated by this graph and from observing the validation loss of all of the models, occurs at iteration 460. 
+
+
+Using the set of weights obtained at iteration 460, this network achieved a testing accuracy of 83.62% 
 on the holdout dataset.  
 
-## Discussion
-One reason that this network could not achieve a higher test accuracy is that the network is not robust to rotation. 
-Many sign language images were captured from unique angles that the network likely failed to identify. Consider the 
-image below:
+## Potential Improvements
+This testing accuracy is reasonble considering the implicit limitations. Only 74 students were used to train the data. We don't expect our model to be able to perfectly predict on unseen data given this tremendous lack of training and validation data. 
 
-![](full_data/gesture_dataset/D/33_D_11.jpg)
+This model could be significantly improved if more data was collected. This data could be manually generated by taking photos of different signs in a variety of different settings and from different angles. This data could also be generated through surveying or through another class assignment akin to the one spawning this report. 
 
-*Figure 8: Unique angle of the sign language gesture corresponding to the letter D*
+This project could also be extended by merging real-time event detection (https://www.youtube.com/watch?v=QcCjmWwEUgg) with an extended form of this model.
 
-The image above is labeled as the letter D. The network failed to classify this image as a D and instead classified it
-as an I. The sign language gesture for the letter I is illustrated below:
-
-![](full_data/gesture_dataset/I/15_I_1.jpg)
-
-*Figure 9: The sign language gesture corresponding to the letter I*
-
-From Figures 8 and 9 we can see that the network failed to remain robust to rotation. 
-
-Another possible reason for inaccuracy in this network stems from the lack of balance in the dataset. The network 
-performed significantly weaker on ethnic hands as opposed to white hands because of the disproportionate amount of white
-hands in the dataset. To rectify this problem one could use a sub-sampler to ensure that a balance was achieved while 
-training. We could also improve the test accuracy by increasing the size of the training data. Only 1000 training data
-were used. 
-
-Nonetheless, this network produced reasonable testing accuracy. Through the implementation of this project I gained
-experience in PyTorch and strengthened my understanding of neural networks. 
+Stay tuned for the next chapter of this project. 
 
 
