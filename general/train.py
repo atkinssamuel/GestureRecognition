@@ -7,9 +7,8 @@ import scipy.signal
 from general.helpers import get_accuracy, get_loss
 
 
-def train_model(model, name, training_data, validation_data=None, batch_size=1, epoch_count=1, shuffle=False,
-                learning_rate=0.01, checkpoint_frequency=5, momentum=0.9,
-                save=True, train_save="", valid_save="", model_save=""):
+def train_model(model, name, training_data, results_dir, model_save, validation_data=None, batch_size=1, epoch_count=1,
+                shuffle=False, learning_rate=0.01, checkpoint_frequency=5, momentum=0.9, save=False):
 
     train_loader = torch.utils.data.DataLoader(training_data, batch_size=batch_size)
     criterion = nn.CrossEntropyLoss()
@@ -41,48 +40,61 @@ def train_model(model, name, training_data, validation_data=None, batch_size=1, 
             # checkpoint:
             if current_iteration % checkpoint_frequency == 0:
                 print("Current Training Accuracy at Iteration {}: {}".format(current_iteration, train_acc[-1]))
-
-                model_string = str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
-                               '_' + str(learning_rate)
-                torch.save(model.state_dict(), model_save + model_string)
+                if save:
+                    model_string = str(name) + '_' + str(current_iteration) + '_' + str(batch_size) + \
+                                   '_' + str(learning_rate)
+                    torch.save(model.state_dict(), model_save + model_string)
 
             current_iteration += 1
         # scheduler.step(get_loss(model, training_data))
 
     # plotting
-    plt.title("Training Loss")
-    plt.plot(iterations, losses, label="Train")
-    plt.xlabel("Iterations")
-    plt.ylabel("Training Loss")
-    plt.savefig(train_save + "training_loss.png")
-    plt.close()
-
-    plt.title("Training Accuracy")
-    # Raw plot:
-    # plt.plot(iterations, train_acc, label="Train")
-    # savgol filter:
-    # plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=5, window_length=31), label="Train")
-    plt.plot(iterations, train_acc, label="Train")
-    plt.xlabel("Iterations")
-    plt.ylabel("Training Accuracy")
-    plt.legend(loc='best')
-    plt.savefig(train_save + "training_accuracy.png")
-    plt.close()
-
     if validation_data is not None:
-        plt.title("Validation Accuracy")
-        plt.plot(validation_acc, label="Validation")
+        plt.title("Training and Validation Accuracies")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(validation_acc), polyorder=3, window_length=5),
+                 label="Validation")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
+                 label="Train")
         plt.xlabel("Iterations")
-        plt.ylabel("Validation Accuracy")
+        plt.ylabel("Accuracy")
         plt.legend(loc='best')
-        plt.savefig(valid_save + "validation_accuracy.png")
+        plt.grid(True)
+        plt.savefig(results_dir + "training_valid_accuracy.png")
         plt.close()
 
-        plt.title("Validation Loss")
-        plt.plot(validation_loss, label="Validation")
+        plt.title("Training and Validation Losses")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(validation_loss), polyorder=3, window_length=5),
+                 label="Validation")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
+                 label="Train")
         plt.xlabel("Iterations")
-        plt.ylabel("Validation Loss")
+        plt.ylabel("Loss")
         plt.legend(loc='best')
-        plt.savefig(valid_save + "validation_loss.png")
+        plt.grid(True)
+        plt.savefig(results_dir + "training_valid_loss.png")
         plt.close()
+    else:
+        plt.title("Training Accuracy")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
+                 label="Train")
+        plt.xlabel("Iterations")
+        plt.ylabel("Training Accuracy")
+        plt.legend(loc='best')
+        plt.grid(True)
+        plt.savefig(results_dir + "training_accuracy.png")
+        plt.close()
+
+        plt.title("Training Loss")
+        plt.plot(iterations, scipy.signal.savgol_filter(np.array(train_acc), polyorder=3, window_length=5),
+                 label="Train")
+        plt.xlabel("Iterations")
+        plt.ylabel("Training Loss")
+        plt.grid(True)
+        plt.savefig(results_dir + "training_loss.png")
+        plt.close()
+
+
+
+
+
     print("Final Training Accuracy: {}".format(train_acc[-1]))

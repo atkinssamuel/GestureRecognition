@@ -4,17 +4,16 @@ import pickle
 from PIL import Image
 from torchvision.transforms import ToTensor
 
-# Creating Large Dataset:
 from general.helpers import Data
+from general.consts import DirectoryConsts
 
 # There are 102 student samples for each letter available in the dataset
 # The dataset files are in the following format:
 # *student_number* + _ + *letter* + _ + *image_index*
 
 letter_array = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
-dataset_root = 'full_data/gesture_dataset/'
 
-# Data Extraction:
+# Defining data arrays:
 training_images = []
 training_labels = []
 validation_images = []
@@ -24,12 +23,12 @@ testing_labels = []
 
 for letter in letter_array:
     print("Adding images for letter {}".format(letter))
-    for student_number in range(1, 70):
+    for student_number in range(1, 75):
         for image_index in range(1, 4):
             image_string = str(letter) + '/' + str(student_number) + '_' + letter + \
                            '_' + str(image_index) + '.jpg'
             try:
-                image = Image.open(dataset_root + image_string)
+                image = Image.open(DirectoryConsts.dataset_root + image_string)
             except:
                 continue
             image = ToTensor()(image)
@@ -39,12 +38,12 @@ for letter in letter_array:
             label = letter_array.index(letter)
             training_labels.append(label)
 
-    for student_number in range(70, 90):
+    for student_number in range(75, 90):
         for image_index in range(1, 4):
             image_string = str(letter) + '/' + str(student_number) + '_' + letter + \
                            '_' + str(image_index) + '.jpg'
             try:
-                image = Image.open(dataset_root + image_string)
+                image = Image.open(DirectoryConsts.dataset_root + image_string)
             except:
                 continue
             image = ToTensor()(image)
@@ -59,7 +58,7 @@ for letter in letter_array:
             image_string = str(letter) + '/' + str(student_number) + '_' + letter + \
                            '_' + str(image_index) + '.jpg'
             try:
-                image = Image.open(dataset_root + image_string)
+                image = Image.open(DirectoryConsts.dataset_root + image_string)
             except:
                 continue
             image = ToTensor()(image)
@@ -87,6 +86,17 @@ training_data_obj.close()
 validation_data_obj.close()
 testing_data_obj.close()
 
-print("Length of training dataset: " + str(training_data.__len__()))
-print("Length of validation dataset: " + str(validation_data.__len__()))
-print("Length of testing dataset: " + str(testing_data.__len__()))
+training_length = training_data.__len__()
+validation_length = validation_data.__len__()
+testing_length = testing_data.__len__()
+dataset_length = training_length + validation_length + testing_length
+
+# Length of dataset: 2308
+print("Length of dataset: " + str(dataset_length))
+print("Length of training dataset: " + str(training_length))
+print("Length of validation dataset: " + str(validation_length))
+print("Length of testing dataset: " + str(testing_length))
+
+print("Training-Valdation-Testing Split = {}-{}-{}".format(round(training_length/dataset_length*100, 2),
+                                                           round(validation_length/dataset_length*100, 2),
+                                                           round(testing_length/dataset_length*100, 2)))

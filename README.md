@@ -1,7 +1,7 @@
+
+
 # Gesture Recognition
-In this repository a convolutional neural network is designed to classify images of sign language gestures. There are
-9 categories corresponding to the letters ranging from A-I. The gesture images corresponding to these letters were 
-gathered manually through a group submission system. The following are some examples of various sign language gestures:
+In this repository a convolutional neural network is designed to classify images of sign language gestures. There are 9 categories corresponding to the letters ranging from A-I. The gesture images corresponding to these letters were gathered manually through a group submission system. The following are some examples of various sign language gestures:
 
 ![](full_data/gesture_dataset/A/1_A_1.jpg)
 
@@ -14,6 +14,54 @@ gathered manually through a group submission system. The following are some exam
 ![](full_data/gesture_dataset/H/19_H_1.jpg)
 
 *Figure 3: An image corresponding to the letter H*
+
+## Data Pre-Processing
+### Data Collection
+Each student submitted three images of their own hand gestures for each gesture from A to I. Students were to take these images on a white background so that the images of their hand would be clear. Each student was to ensure that only their hand was in the frame. No sleeves or watches were to be included. Further, students were encouraged to rotate the gesture so that the model could become robust to rotation. One problem that we should look out for is the lack of ethnically diverse images. Our model may perform better on lighter hands than darker hands. We want to ensure that our model does not contain this type of bias and if it does, we need to be aware of it. 
+
+102 students submitted photos. These images were organized into folders. The "A" folder contains all of the images pertaining to the "A" sign, "B" to the "B" sign, and so on. Each image file was named using the following convention: 
+
+```<student index>_<sign letter>_<image number>.jpg```
+
+For example, the 15th student's second image of the sign "H" was named ```15_H_2.jpg```. This naming convention made it easy to sort the images. Prior to defining our various data partitions, the images in the dataset were examined to see if there were any problems with the collected data. 
+
+Despite the abundantly clear instructions, many students mis-labelled their images. Further, some students took their images from far away wearing long-sleeved shirts:
+
+![](full_data/gesture_dataset/D/77_D_1.jpg)
+
+*Figure _: Example of an unexpected image input (```77_D_1.jpg```)*
+
+The wrongly labelled images were re-labeled and moved to the directories that they belonged. Images that included sleeves were either removed or cropped such that only the hand was visible. 
+
+### Data Loading and Splitting
+After these issues were resolved, the data was loaded and split into training, validation, and testing sets. To ensure that the model was not biased, students present in the training set were not present in the validation or testing sets. Given that each student's index is random, by selecting the first 70% of students to be in the training set, the next 15% to be in the validation set, and the last 15% to be in the testing set, a random split was obtained. Using more training data as opposed to validation and testing data ensures that the model can learn the complex relationships between the input images and the output categories. More validation and testing data results in better generalization. A 70-15-15 training-validation-testing split was used as opposed to a 60-20-20 or an 80-10-10 because I wanted my model to be able to generalize fairly well without sacrificing losing too much of its ability to capture these relationships. ```full_data/load_gesture_data.py``` loads the data and splits the data into training, validation, and testing Data objects defined in ```general/helpers.py```:
+
+```python
+class Data:
+    def __init__(self, images, labels):
+        self.labels = labels
+        self.images = images
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        x = self.images[index]
+        y = self.labels[index]
+        return x, y
+```
+
+Since the data organization process takes some time, these Data objects were then stored in data object files using pickle.dump for quick data loading during training and testing. The sizes of each data object are delineated below:
+
+```python
+Length of dataset: 2308
+Length of training dataset: 1620
+Length of validation dataset: 346
+Length of testing dataset: 342
+Training-Valdation-Testing Split = 70.19-14.99-14.82
+```
+
+
 
 Originally, a subset of the dataset was used to ensure that the program could successfully achieve perfect training 
 accuracy. The loss and accuracy plots corresponding to this dataset are illustrated below:

@@ -1,31 +1,31 @@
 import torch
+import pickle
 
+from general.consts import DirectoryConsts, FileNames, TrainingConsts, TestingConsts
 from general.helpers import get_accuracy
 from general.models import CNN
 from general.train import train_model
-import pickle
+from general.test import test_model
 
-data_objects_root = "full_data/data_objects/"
-training_data_obj = open(data_objects_root + "training_data_obj", "rb")
-validation_data_obj = open(data_objects_root + "validation_data_obj", "rb")
-testing_data_obj = open(data_objects_root + "testing_data_obj", "rb")
+training_data_obj = open(DirectoryConsts.dataset_root + FileNames.training_data_obj, "rb")
+validation_data_obj = open(DirectoryConsts.dataset_root + FileNames.validation_data_obj, "rb")
+testing_data_obj = open(DirectoryConsts.dataset_root + FileNames.testing_data_obj, "rb")
 
 training_data = pickle.load(training_data_obj)
 validation_data = pickle.load(validation_data_obj)
 testing_data = pickle.load(testing_data_obj)
 
 network = CNN()
-train_save_directory = "full_data/results/"
-model_save_directory = "full_data/models/"
 
-train = False
+train = True
 if train:
-    train_model(network, "CNN", training_data, batch_size=256, epoch_count=150, shuffle=True, learning_rate=0.0005,
-                checkpoint_frequency=20, train_save=train_save_directory, model_save=model_save_directory)
+    train_model(network, "CNN", training_data, DirectoryConsts.results_directory,
+                DirectoryConsts.model_save_directory, validation_data=validation_data,
+                batch_size=TrainingConsts.batch_size, epoch_count=TrainingConsts.epoch_count,
+                shuffle=TrainingConsts.shuffle_flag, learning_rate=TrainingConsts.learning_rate,
+                checkpoint_frequency=TrainingConsts.checkpoint_frequency, momentum=TrainingConsts.momentum,
+                save=TrainingConsts.save_flag)
 
 test = True
 if test:
-    state = torch.load('full_data/models/CNN_860_256_0.0005')
-    network.load_state_dict(state)
-    accuracy = get_accuracy(network, testing_data)
-    print("Testing Accuracy = {}%".format(round(accuracy * 100, 2)))
+    test_model(network, DirectoryConsts.model_save_directory, TestingConsts.test_model_name, testing_data)
